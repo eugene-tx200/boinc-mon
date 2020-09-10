@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<!-- development version, includes helpful console warnings -->
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<style>
+  table, th, td {
+      padding: 5px;
+  }
+  th, td {
+      border-bottom: 1px solid lightgray;
+  }
+  table {
+      width: 100%;
+  }
+  th {
+      text-align: left;
+      background-color: lightgray;
+  }
+  caption {
+      text-align: left;
+  }
+  progress {
+      width: 100%
+  }
+  section.tab {
+      margin: 5px;
+  }
+</style>
+<title>BOINC Monitor</title>
+</head>
+<body>
+  <div id="app">
+    <section id="projectTab" class="tab">
+      <template v-if="get_state">
+	<table>
+	  <caption><b>Projects</b></caption>
+	  <thead>
+	    <tr>
+	      <th>Project Name</th><th>Project URL</th><th># Tasks</th>
+	    </tr>
+	  </thead>
+	  <tbody>
+	    <tr v-for="project in get_state">
+	      <td>[[ project.name ]]</td><td>[[ project.url ]]</td><td>[[ project.tasks.length ]]</td>
+	    </tr>
+	  </tbody>
+	</table>
+      </template>
+      <template v-else>
+	<p>Looks like there is no BOINC projects</p>
+      </template>
+    </section>
+    <section id="taskTab" class="tab">
+      <table>
+	<caption><b>Tasks</b></caption>
+	<thead>
+	  <tr>
+	    <th>State</th><th>Done %</th><th>Project</th><th>Task</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  <template v-for="project in get_state">
+	    <tr v-for="task in project.tasks">
+	      <td>[[ task.state ]]</td><td>[[ Number(task.progress * 100).toFixed(2) ]]</td><td>[[ project.name ]]</td><td>[[ task.name ]]</td>
+	    </tr>
+	  </template>
+	</tbody>
+      </table>
+    </section>
+    <section id="progressTab" class="tab">
+      <table>
+	<caption><b>Progress</b></caption>
+	<thead>
+	  <tr>
+	    <th>Task Name</th><th>Progress</th>
+	  </tr>
+	</thead>
+	  <tbody>
+	    <template v-for="project in get_state">
+	      <tr v-for="task in project.tasks">
+		<td>[[ task.name ]]</td><td><progress :value="task.progress" max="1"> [[ task.progress ]] </progress></td>
+	      </tr>
+	    </template>
+	  </tbody>
+      </table>
+    </section>
+  </div>
+  <script>
+    var dataURL = './task_status';
+    var app = new Vue({
+	delimiters: ["[[", "]]"],
+	el: '#app',
+	data: {
+	    get_state: []
+	},
+	created() {
+	    this.fetchJson();
+	    this.timer = setInterval(this.fetchJson, 10000)
+	},
+	methods: {
+	    fetchJson () {
+		var self = this
+		$.get(dataURL, function(data) {
+		self.get_state = data
+		});
+	    }
+	},
+	beforeDestroy () {
+	    clearInterval(this.timer)
+	}
+    });
+  </script>
+</body>
+</html>
